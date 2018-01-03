@@ -10,9 +10,13 @@ It runs `fish_prompt` and `fish_right_prompt` functions as another process and t
 
 ## Installation
 
+Just say below!
+
 ```
 $ fisher acomagu/fish-async-prompt
 ```
+
+And then enjoy your creative time.
 
 ## Author
 
