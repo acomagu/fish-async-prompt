@@ -12,20 +12,29 @@ function __async_prompt_setup --on-event fish_prompt
     end
 end
 
-function __async_prompt
+function __async_prompt_sync_val --on-signal WINCH
+    __async_prompt_sync_val_for __async_prompt_text
+    __async_prompt_sync_val_for __async_prompt_right_text
+end
+
+function __async_prompt_sync_val_for
     set pref $argv[1]
     set univ_text_name $pref'_'(echo %self)
     set univ_text (eval 'echo $'$univ_text_name)
     set glbl_text_name $pref
-    set glbl_text (eval 'echo $'$glbl_text_name)
 
     set -q $univ_text_name; and begin
-        echo $univ_text
         set -g $glbl_text_name $univ_text
         set -e $univ_text_name
-    end; or begin
-        echo $glbl_text
     end
+end
+
+function __async_prompt
+    set pref $argv[1]
+    set glbl_text_name $pref
+    set glbl_text (eval 'echo $'$glbl_text_name)
+
+    echo $glbl_text
 end
 
 function __async_prompt_fire --on-event fish_prompt
