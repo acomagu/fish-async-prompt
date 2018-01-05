@@ -47,16 +47,15 @@ end
 
 function __async_prompt_ask
     set pref $argv[1]
-    fish -c $pref'_wrapper '(echo %self) &
+    fish -c 'set -U '$pref'_text_'(echo %self)' ('(__async_prompt_main_func_name $pref)')' &
     function $pref'_handler' --on-process-exit (jobs -lp | tail -n1)
         kill -WINCH %self
     end
 end
 
-function __async_prompt_wrapper
-    set -U __async_prompt_text_$argv[1] (fish_prompt)
-end
-
-function __async_prompt_right_wrapper
-    set -U __async_prompt_right_text_$argv[1] (fish_right_prompt)
+function __async_prompt_main_func_name
+    test $argv[1] = __async_prompt
+    and echo fish_prompt
+    or test $argv[1] = __async_prompt_right
+    and echo fish_right_prompt
 end
