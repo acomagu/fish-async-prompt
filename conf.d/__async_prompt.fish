@@ -3,59 +3,44 @@ function __async_prompt_setup --on-event fish_prompt
 
     functions -q fish_prompt
     and function fish_prompt
-        __async_prompt __async_prompt_text
+        echo $__async_prompt_text
     end
 
     functions -q fish_right_prompt
     and function fish_right_prompt
-        __async_prompt __async_prompt_right_text
+        echo $__async_prompt_right_text
     end
 end
 
 function __async_prompt_sync_val --on-signal WINCH
-    __async_prompt_sync_val_for __async_prompt_text
-    __async_prompt_sync_val_for __async_prompt_right_text
+    __async_prompt_var_move __async_prompt_text __async_prompt_text_(echo %self)
+    __async_prompt_var_move __async_prompt_right_text __async_prompt_right_text_(echo %self)
 end
 
-function __async_prompt_sync_val_for
-    set pref $argv[1]
-    set univ_text_name $pref'_'(echo %self)
-    set univ_text (eval 'echo $'$univ_text_name)
-    set glbl_text_name $pref
+function __async_prompt_var_move
+    set dst $argv[1]
+    set orig $argv[2]
 
-    set -q $univ_text_name; and begin
-        set -g $glbl_text_name $univ_text
-        set -e $univ_text_name
+    set -q $orig; and begin
+        set -g $dst $$orig
+        set -e $orig
     end
-end
-
-function __async_prompt
-    set pref $argv[1]
-    set glbl_text_name $pref
-    set glbl_text (eval 'echo $'$glbl_text_name)
-
-    echo $glbl_text
 end
 
 function __async_prompt_fire --on-event fish_prompt
     functions -q fish_prompt
-    and __async_prompt_ask __async_prompt
+    and begin
+        fish -c 'set -U __async_prompt_text_'(echo %self)' (fish_prompt)' &
+        function __async_prompt_handler --on-process-exit (jobs -lp |tail -n1)
+            kill -WINCH %self
+        end
+    end
 
     functions -q fish_right_prompt
-    and __async_prompt_ask __async_prompt_right
-end
-
-function __async_prompt_ask
-    set pref $argv[1]
-    fish -c 'set -U '$pref'_text_'(echo %self)' ('(__async_prompt_main_func_name $pref)')' &
-    function $pref'_handler' --on-process-exit (jobs -lp | tail -n1)
-        kill -WINCH %self
+    and begin
+        fish -c 'set -U __async_prompt_right_text_'(echo %self)' (fish_right_prompt)' &
+        function __async_prompt_right_handler --on-process-exit (jobs -lp |tail -n1)
+            kill -WINCH %self
+        end
     end
-end
-
-function __async_prompt_main_func_name
-    test $argv[1] = __async_prompt
-    and echo fish_prompt
-    or test $argv[1] = __async_prompt_right
-    and echo fish_right_prompt
 end
