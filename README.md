@@ -28,6 +28,14 @@ Define variables inherited to prompt functions. Set `all` to pass all global var
 
 **Default:** `status`
 
+### Variable: `async_prompt_functions`
+
+Define functions replaced to run asyncronously. Usually one or both of `fish_prompt` and `fish_right_prompt`.
+
+Other functions can be specified, but they must be called from `fish_prompt` or `fish_right_prompt` and arguments can't be passed.
+
+**Default:** `fish_prompt fish_right_prompt`
+
 ## Author
 
 - [acomagu](https://github.com/acomagu)

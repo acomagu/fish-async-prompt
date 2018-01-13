@@ -1,20 +1,45 @@
-function __async_prompt_setup --on-event fish_prompt
+function __async_prompt_setup_on_startup --on-event fish_prompt
     functions -e (status current-function)
 
-    functions -q fish_prompt
-    and function fish_prompt
-        echo $__async_prompt_text
-    end
+    __async_prompt_setup
+end
 
-    functions -q fish_right_prompt
-    and function fish_right_prompt
-        echo $__async_prompt_right_text
+function __async_prompt_setup
+    set -q async_prompt_functions
+    and set -g __async_prompt_functions_internal $async_prompt_functions
+
+    for func in (__async_prompt_config_functions)
+        functions -q '__async_prompt_'$func'_orig'
+        or functions -c $func '__async_prompt_'$func'_orig'
+
+        function $func -V func
+            eval 'echo $__async_prompt_'$func'_text'
+        end
     end
 end
 
+function __async_prompt_reset --on-variable async_prompt_functions
+    # Revert functions
+    for func in (__async_prompt_config_functions)
+        functions -q '__async_prompt_'$func'_orig'
+        and begin
+            functions -e $func
+
+            # If the function is defined redaundantly, cannot override it by
+            # `functions -c` so done it by create wrapper function.
+            function $func -V func
+                eval '__async_prompt_'$func'_orig' $argv
+            end
+        end
+    end
+
+    __async_prompt_setup
+end
+
 function __async_prompt_sync_val --on-signal WINCH
-    __async_prompt_var_move __async_prompt_text __async_prompt_text_(echo %self)
-    __async_prompt_var_move __async_prompt_right_text __async_prompt_right_text_(echo %self)
+    for func in (__async_prompt_config_functions)
+        __async_prompt_var_move '__async_prompt_'$func'_text' '__async_prompt_'$func'_text_'(echo %self)
+    end
 end
 
 function __async_prompt_var_move
@@ -29,18 +54,10 @@ end
 
 function __async_prompt_fire --on-event fish_prompt
     set st $status
-    functions -q fish_prompt
-    and begin
-        __async_prompt_config_inherit_variables |__async_prompt_spawn $st 'set -U __async_prompt_text_'(echo %self)' (fish_prompt)'
-        function __async_prompt_handler --on-process-exit (jobs -lp |tail -n1)
-            kill -WINCH %self
-        end
-    end
 
-    functions -q fish_right_prompt
-    and begin
-        __async_prompt_config_inherit_variables |__async_prompt_spawn $st 'set -U __async_prompt_right_text_'(echo %self)' (fish_right_prompt)'
-        function __async_prompt_right_handler --on-process-exit (jobs -lp |tail -n1)
+    for func in (__async_prompt_config_functions)
+        __async_prompt_config_inherit_variables |__async_prompt_spawn $st 'set -U __async_prompt_'$func'_text_'(echo %self)' ('$func')'
+        function '__async_prompt_'$func'_handler' --on-process-exit (jobs -lp |tail -n1)
             kill -WINCH %self
         end
     end
@@ -85,4 +102,18 @@ function __async_prompt_config_inherit_variables
         end
     end
     or echo status
+end
+
+function __async_prompt_config_functions
+    set -q __async_prompt_functions_internal
+    and for func in $__async_prompt_functions_internal
+        functions -q "$func"
+        or continue
+
+        echo $func
+    end
+    or begin
+        echo fish_prompt
+        echo fish_right_prompt
+    end
 end
