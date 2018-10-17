@@ -7,6 +7,13 @@ and begin
     end
 
     function __async_prompt_setup
+        set -l fish_pids (pgrep -f fish)
+        set -U -n | sed -rn 's/__async_prompt_.*_([0-9]+)/\0 \1/p' | while read -l varname pid
+            if not contains "$pid" fish_pids
+                set -e $varname
+            end
+        end
+
         set -q async_prompt_functions
         and set -g __async_prompt_functions_internal $async_prompt_functions
 
