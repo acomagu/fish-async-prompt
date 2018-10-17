@@ -45,10 +45,10 @@ and begin
     end
 
     function __async_prompt_var_move
-        set dst $argv[1]
-        set orig $argv[2]
+        set -l dst $argv[1]
+        set -l orig $argv[2]
 
-        set -q $orig; and begin
+        if set -q $orig
             set -g $dst $$orig
             set -e $orig
         end
@@ -58,8 +58,8 @@ and begin
         set st $status
 
         for func in (__async_prompt_config_functions)
-            __async_prompt_config_inherit_variables |__async_prompt_spawn $st 'set -U __async_prompt_'$func'_text_'(echo %self)' ('$func')'
-            function '__async_prompt_'$func'_handler' --on-process-exit (jobs -lp |tail -n1)
+            __async_prompt_config_inherit_variables | __async_prompt_spawn $st 'set -U __async_prompt_'$func'_text_'(echo %self)' ('$func')'
+            function '__async_prompt_'$func'_handler' --on-process-exit (jobs -lp | tail -n1)
                 kill -WINCH %self
             end
         end
@@ -72,20 +72,24 @@ and begin
                 contains $line FISH_VERSION PWD SHLVL _ history
                 and continue
 
-                test "$line" = status
-                and echo status $st
-                or echo $line (string escape -- $$line)
+                if test "$line" = status
+                    echo status $st
+                else
+                    or echo $line (string escape -- $$line)
+                end
             end
-        end |fish -c 'function __async_prompt_ses
+        end | fish -c 'function __async_prompt_ses
             return $argv
         end
         while read -a line
             test -z "$line"
             and continue
 
-            test "$line[1]" = status
-            and set st $line[2]
-            or eval set "$line"
+            if test "$line[1]" = status
+                set st $line[2]
+            else
+                eval set "$line"
+            end
         end
 
         not set -q st
@@ -95,26 +99,28 @@ and begin
     end
 
     function __async_prompt_config_inherit_variables
-        set -q async_prompt_inherit_variables
-        and begin
-            test "$async_prompt_inherit_variables" = all
-            and set -ng
-            or for item in $async_prompt_inherit_variables
-                echo $item
+        if set -q async_prompt_inherit_variables
+            if test "$async_prompt_inherit_variables" = all
+                set -ng
+            else
+                for item in $async_prompt_inherit_variables
+                    echo $item
+                end
             end
+        else
+            echo status
         end
-        or echo status
     end
 
     function __async_prompt_config_functions
-        set -q __async_prompt_functions_internal
-        and for func in $__async_prompt_functions_internal
-            functions -q "$func"
-            or continue
+        if set -q __async_prompt_functions_internal
+            for func in $__async_prompt_functions_internal
+                functions -q "$func"
+                or continue
 
-            echo $func
-        end
-        or begin
+                echo $func
+            end
+        else
             echo fish_prompt
             echo fish_right_prompt
         end
