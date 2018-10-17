@@ -47,7 +47,7 @@ and begin
 
     function __async_prompt_sync_val --on-signal WINCH
         for func in (__async_prompt_config_functions)
-            __async_prompt_var_move '__async_prompt_'$func'_text' '__async_prompt_'$func'_text_'(echo %self)
+            __async_prompt_var_move '__async_prompt_'$func'_text' '__async_prompt_'$func'_text_'(__async_prompt_pid)
         end
     end
 
@@ -65,11 +65,11 @@ and begin
         set st $status
 
         for func in (__async_prompt_config_functions)
-            __async_prompt_config_inherit_variables | __async_prompt_spawn $st 'set -U __async_prompt_'$func'_text_'(echo %self)' ('$func')'
+            __async_prompt_config_inherit_variables | __async_prompt_spawn $st 'set -U __async_prompt_'$func'_text_'(__async_prompt_pid)' ('$func')'
             function '__async_prompt_'$func'_handler' --on-process-exit (jobs -lp | tail -n1)
-                kill -WINCH %self
+                kill -WINCH (__async_prompt_pid)
                 sleep 0.1
-                kill -WINCH %self
+                kill -WINCH (__async_prompt_pid)
             end
         end
     end
@@ -132,6 +132,14 @@ and begin
         else
             echo fish_prompt
             echo fish_right_prompt
+        end
+    end
+
+    function __async_prompt_pid
+        if test -n "$pid"
+            echo $pid
+        else
+            cat /proc/self/stat | awk '{ print $4 }'
         end
     end
 end
