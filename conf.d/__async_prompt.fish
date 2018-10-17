@@ -123,15 +123,15 @@ and begin
 
     function __async_prompt_config_functions
         if set -q __async_prompt_functions_internal
-            for func in $__async_prompt_functions_internal
-                functions -q "$func"
-                or continue
-
-                echo $func
-            end
+            string join \n $__async_prompt_functions_internal
         else
             echo fish_prompt
             echo fish_right_prompt
+        end | while read -l func
+            functions -q "$func"
+            or continue
+
+            echo $func
         end
     end
 
