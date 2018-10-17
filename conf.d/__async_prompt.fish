@@ -139,7 +139,13 @@ and begin
         if test -n "$pid"
             echo $pid
         else
-            echo %self
+            if test -n "$fish_pid"
+                # New fish pid format
+                echo $fish_pid
+            else
+                # Old fish pid format
+                echo %self
+            end
         end
     end
 end
