@@ -61,6 +61,8 @@ and begin
             __async_prompt_config_inherit_variables | __async_prompt_spawn $st 'set -U __async_prompt_'$func'_text_'(echo %self)' ('$func')'
             function '__async_prompt_'$func'_handler' --on-process-exit (jobs -lp | tail -n1)
                 kill -WINCH %self
+                sleep 0.1
+                kill -WINCH %self
             end
         end
     end
