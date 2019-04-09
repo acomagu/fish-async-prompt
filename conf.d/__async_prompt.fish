@@ -66,9 +66,7 @@ and begin
 
         for func in (__async_prompt_config_functions)
             __async_prompt_config_inherit_variables | __async_prompt_spawn $st 'set -l prompt ('$func'); and set -U __async_prompt_'$func'_text_'(__async_prompt_pid)' $prompt'
-            set -l apid (jobs -lp | tail -n1)
-            disown $apid # Prevent blocking exit while job is running.
-            function '__async_prompt_'$func'_handler' --on-process-exit $apid
+            function '__async_prompt_'$func'_handler' --on-process-exit (jobs -lp | tail -n1)
                 kill -WINCH (__async_prompt_pid)
                 sleep 0.1
                 kill -WINCH (__async_prompt_pid)
