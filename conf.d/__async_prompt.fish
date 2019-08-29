@@ -1,5 +1,4 @@
-status is-interactive
-and begin
+if status is-interactive
     function __async_prompt_setup_on_startup --on-event fish_prompt
         functions -e (status current-function)
 
@@ -30,8 +29,7 @@ and begin
     function __async_prompt_reset --on-variable async_prompt_functions
         # Revert functions
         for func in (__async_prompt_config_functions)
-            functions -q '__async_prompt_'$func'_orig'
-            and begin
+            if functions -q '__async_prompt_'$func'_orig'
                 functions -e $func
 
                 # If the function is defined redaundantly, cannot override it by
