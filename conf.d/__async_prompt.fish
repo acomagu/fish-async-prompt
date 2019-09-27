@@ -85,7 +85,7 @@ if status is-interactive
                     or echo $line (string escape -- $$line)
                 end
             end
-        end | fish -c 'function __async_prompt_ses
+        end | env SHLVL=(math "$SHLVL-1") fish -c 'function __async_prompt_ses
             return $argv
         end
         while read -a line
