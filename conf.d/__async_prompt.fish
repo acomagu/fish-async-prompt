@@ -73,19 +73,24 @@ if status is-interactive
     end
 
     function __async_prompt_spawn
+        set -l envs
         begin
             set st $argv[1]
             while read line
-                contains $line FISH_VERSION PWD SHLVL _ history
+                contains $line FISH_VERSION PWD _ history
                 and continue
 
-                if test "$line" = status
+                switch "$line"
+                case status
                     echo status $st
-                else
-                    or echo $line (string escape -- $$line)
+                case SHLVL
+                    set envs $envs SHLVL=(math $SHLVL - 1)
+                case '*'
+                    echo $line (string escape -- $$line)
                 end
             end
-        end | env SHLVL=(math "$SHLVL-1") fish -c 'function __async_prompt_ses
+        end | read -lz vars
+        echo $vars | env $envs fish -c 'function __async_prompt_ses
             return $argv
         end
         while read -a line
@@ -116,6 +121,7 @@ if status is-interactive
             end
         else
             echo status
+            echo SHLVL
         end
     end
 
