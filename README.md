@@ -24,7 +24,7 @@ If your prompt don't work correctly, try changeing the configuration.
 
 Define variables inherited to prompt functions. Set `all` to pass all global variables.
 
-**Default:** `status`
+**Default:** `status SHLVL`
 
 ### Variable: `async_prompt_functions`
 
