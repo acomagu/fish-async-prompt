@@ -63,7 +63,7 @@ if status is-interactive
         set st $status
 
         for func in (__async_prompt_config_functions)
-            __async_prompt_config_inherit_variables | __async_prompt_spawn $st 'set -l prompt ('$func'); and set -U __async_prompt_'$func'_text_'(__async_prompt_pid)' $prompt'
+            __async_prompt_config_inherit_variables | __async_prompt_spawn $st $func' | read -z prompt; and set -U __async_prompt_'$func'_text_'(__async_prompt_pid)' $prompt'
             function '__async_prompt_'$func'_handler' --on-process-exit (jobs -lp | tail -n1)
                 kill -WINCH (__async_prompt_pid)
                 sleep 0.1
