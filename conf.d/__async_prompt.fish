@@ -122,6 +122,7 @@ if status is-interactive
         else
             echo status
             echo SHLVL
+            echo CMD_DURATION
         end
     end
 
