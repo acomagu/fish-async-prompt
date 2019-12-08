@@ -127,12 +127,15 @@ if status is-interactive
     end
 
     function __async_prompt_config_functions
-        if set -q __async_prompt_functions_internal
-            string join \n $__async_prompt_functions_internal
-        else
-            echo fish_prompt
-            echo fish_right_prompt
-        end | while read -l func
+        set -l funcs (
+            if set -q __async_prompt_functions_internal
+                string join \n $__async_prompt_functions_internal
+            else
+                echo fish_prompt
+                echo fish_right_prompt
+            end
+        )
+        for func in $funcs
             functions -q "$func"
             or continue
 
