@@ -77,10 +77,8 @@ if status is-interactive
         begin
             set st $argv[1]
             while read line
-                contains $line FISH_VERSION PWD _ history
-                and continue
-
                 switch "$line"
+                case FISH_VERSION PWD _ history 'fish_*' hostname version
                 case status
                     echo status $st
                 case SHLVL
