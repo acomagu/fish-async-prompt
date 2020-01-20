@@ -7,7 +7,7 @@ if status is-interactive
 
     function __async_prompt_setup
         set -l fish_pids (pgrep -f fish)
-        set -U -n | sed -En 's/__async_prompt_.*_([0-9]+)/\0 \1/p' | while read -l varname pid
+        set -U -n | sed -En 's/(__async_prompt_.*_([0-9]+))/\1 \2/p' | while read -l varname pid
             if not contains "$pid" fish_pids
                 set -e $varname
             end
