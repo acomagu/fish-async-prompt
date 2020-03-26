@@ -1,4 +1,5 @@
 if status is-interactive
+    set -g __async_prompt_winched 0
     function __async_prompt_setup_on_startup --on-event fish_prompt
         functions -e (status current-function)
 
@@ -23,6 +24,12 @@ if status is-interactive
             function $func -V func
                 eval 'echo $__async_prompt_'$func'_text'
             end
+        end
+
+        if test "$__async_prompt_winched" != 1
+            echo "while kill -0 $fish_pid 2>/dev/null; do kill -WINCH $fish_pid; sleep 0.5; done" | sh &
+            disown
+            set -g __async_prompt_winched 1
         end
     end
 
@@ -63,8 +70,8 @@ if status is-interactive
         set st $status
 
         for func in (__async_prompt_config_functions)
-            __async_prompt_config_inherit_variables | __async_prompt_spawn $st $func' | read -z prompt; and set -U __async_prompt_'$func'_text_'(__async_prompt_pid)' $prompt'
-            function '__async_prompt_'$func'_handler' --on-process-exit (jobs -lp | tail -n1)
+            __async_prompt_config_inherit_variables | __async_prompt_spawn $st $func' | read -z prompt; set -U __async_prompt_'$func'_text_'(__async_prompt_pid)' $prompt'
+            function '__async_prompt_'$func'_handler' --on-job-exit (jobs -lp | tail -n1)
                 kill -WINCH (__async_prompt_pid)
                 sleep 0.1
                 kill -WINCH (__async_prompt_pid)
@@ -88,7 +95,7 @@ if status is-interactive
                 end
             end
         end | read -lz vars
-        echo $vars | env $envs fish -c 'function __async_prompt_ses
+        echo $vars | env $envs fish -c 'function __async_prompt_set_status
             return $argv
         end
         while read -a line
@@ -104,7 +111,7 @@ if status is-interactive
 
         not set -q st
         and true
-        or __async_prompt_ses $st
+        or __async_prompt_set_status $st
         '$argv[2] &
     end
 
