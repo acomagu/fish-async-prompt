@@ -1,4 +1,5 @@
 if status is-interactive
+    set -g __async_prompt_winched 0
     function __async_prompt_setup_on_startup --on-event fish_prompt
         functions -e (status current-function)
 
@@ -23,6 +24,12 @@ if status is-interactive
             function $func -V func
                 eval 'echo $__async_prompt_'$func'_text'
             end
+        end
+
+        if test "$__async_prompt_winched" != 1
+            echo "while kill -0 $fish_pid 2>/dev/null; do kill -WINCH $fish_pid; sleep 0.5; done" | sh &
+            disown
+            set -g __async_prompt_winched 1
         end
     end
 
