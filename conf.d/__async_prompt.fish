@@ -1,5 +1,4 @@
 if status is-interactive
-    set -g __async_prompt_winched 0
     function __async_prompt_setup_on_startup --on-event fish_prompt
         functions -e (status current-function)
 
@@ -26,11 +25,11 @@ if status is-interactive
             end
         end
 
-        if test "$__async_prompt_winched" != 1
-            echo "while kill -0 $fish_pid 2>/dev/null; do kill -WINCH $fish_pid; sleep 0.5; done" | sh &
+        function __async_prompt_post_prompt --on-event fish_prompt
+            sh -c "for i in \$(seq 3); do kill -WINCH $fish_pid; sleep 0.5; done" &
             disown
-            set -g __async_prompt_winched 1
         end
+        __async_prompt_post_prompt
     end
 
     function __async_prompt_reset --on-variable async_prompt_functions
