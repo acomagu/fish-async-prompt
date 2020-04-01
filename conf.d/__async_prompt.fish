@@ -21,7 +21,7 @@ if status is-interactive
             or functions -c $func '__async_prompt_'$func'_orig'
 
             function $func -V func
-                eval 'echo $__async_prompt_'$func'_text'
+                eval 'echo -n $__async_prompt_'$func'_text'
             end
         end
 
@@ -60,7 +60,7 @@ if status is-interactive
         set -l orig $argv[2]
 
         if set -q $orig
-            set -g $dst $$orig
+            set -g $dst "$$orig"
             set -e $orig
         end
     end
@@ -69,7 +69,7 @@ if status is-interactive
         set st $status
 
         for func in (__async_prompt_config_functions)
-            __async_prompt_config_inherit_variables | __async_prompt_spawn $st $func' | read -z prompt; set -U __async_prompt_'$func'_text_'(__async_prompt_pid)' $prompt'
+            __async_prompt_config_inherit_variables | __async_prompt_spawn $st $func' | read -z prompt; set -U __async_prompt_'$func'_text_'(__async_prompt_pid)' "$prompt"'
             function '__async_prompt_'$func'_handler' --on-job-exit (jobs -lp | tail -n1)
                 kill -WINCH (__async_prompt_pid)
                 sleep 0.1
