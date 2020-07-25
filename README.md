@@ -16,7 +16,7 @@ With [fisher](https://github.com/jorgebucaran/fisher):
 $ fisher add acomagu/fish-async-prompt
 ```
 
-If your prompt don't work correctly, try changeing the configuration.
+If your prompt doesn't work correctly, try changing the configuration.
 
 ## Configuration
 
@@ -28,7 +28,7 @@ Define variables inherited to prompt functions. Set `all` to pass all global var
 
 ### Variable: `async_prompt_functions`
 
-Define functions replaced to run asyncronously. Usually one or both of `fish_prompt` and `fish_right_prompt`.
+Define functions replaced to run asynchronously. Usually one or both of `fish_prompt` and `fish_right_prompt`.
 
 Other functions can be specified, but they must be called from `fish_prompt` or `fish_right_prompt` and arguments can't be passed.
 
