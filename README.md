@@ -10,10 +10,10 @@ It runs `fish_prompt` and `fish_right_prompt` functions as another process and t
 
 ## Installation
 
-With [fisher](https://github.com/jorgebucaran/fisher):
+With [Fisher](https://github.com/jorgebucaran/fisher):
 
 ```
-$ fisher add acomagu/fish-async-prompt
+$ fisher install acomagu/fish-async-prompt
 ```
 
 If your prompt doesn't work correctly, try changing the configuration.
