@@ -13,7 +13,7 @@ It runs `fish_prompt` and `fish_right_prompt` functions as another process and t
 With [Fisher](https://github.com/jorgebucaran/fisher):
 
 ```
-$ fisher install acomagu/fish-async-prompt
+$ fisher add acomagu/fish-async-prompt
 ```
 
 If your prompt doesn't work correctly, try changing the configuration.
