@@ -16,13 +16,21 @@ With [Fisher](https://github.com/jorgebucaran/fisher):
 $ fisher install acomagu/fish-async-prompt
 ```
 
-## Configuration
+## Configurations
+
+If you have problems, try changing the values of these variables.
 
 ### `async_prompt_inherit_variables`
 
 Define variables inherited to prompt functions. Set `all` to pass all global variables.
 
 **Default:** `status SHLVL CMD_DURATION`
+
+**Example:**
+
+```fish
+set -U async_prompt_inherit_variables all
+```
 
 ### `async_prompt_functions`
 
@@ -31,6 +39,12 @@ Define functions replaced to run asynchronously. Usually one or both of `fish_pr
 Other functions can be specified, but they must be called from `fish_prompt` or `fish_right_prompt` and function arguments can't be passed to it.
 
 **Default:** `fish_prompt fish_right_prompt`
+
+**Example:**
+
+```fish
+set -U async_prompt_functions fish_right_prompt
+```
 
 ## Author
 
