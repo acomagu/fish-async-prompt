@@ -1,12 +1,12 @@
 # fish-async-prompt
 
-Make your prompt asynchronous in Fish shell.
+Make your prompt asynchronous in [Fish](https://fishshell.com/).
 
 ## Description
 
 ![Demo Video](demo.png)
 
-It runs `fish_prompt` and `fish_right_prompt` functions as another process and then, update the prompt asynchronously.
+We run your `fish_prompt` and `fish_right_prompt` functions as a separate process to update your prompt asynchronously.
 
 ## Installation
 
@@ -16,24 +16,40 @@ With [Fisher](https://github.com/jorgebucaran/fisher):
 $ fisher install acomagu/fish-async-prompt
 ```
 
-If your prompt doesn't work correctly, try changing the configuration.
+## Configurations
 
-## Configuration
+If you have problems, try changing the values of these variables.
 
-### Variable: `async_prompt_inherit_variables`
+### `async_prompt_inherit_variables`
 
 Define variables inherited to prompt functions. Set `all` to pass all global variables.
 
 **Default:** `status SHLVL CMD_DURATION`
 
-### Variable: `async_prompt_functions`
+**Example:**
+
+```fish
+set -U async_prompt_inherit_variables all
+```
+
+### `async_prompt_functions`
 
 Define functions replaced to run asynchronously. Usually one or both of `fish_prompt` and `fish_right_prompt`.
 
-Other functions can be specified, but they must be called from `fish_prompt` or `fish_right_prompt` and arguments can't be passed.
+Other functions can be specified, but they must be called from `fish_prompt` or `fish_right_prompt` and function arguments can't be passed to it.
 
 **Default:** `fish_prompt fish_right_prompt`
+
+**Example:**
+
+```fish
+set -U async_prompt_functions fish_right_prompt
+```
 
 ## Author
 
 - [acomagu](https://github.com/acomagu)
+
+## License
+
+[MIT](LICENSE.md)
