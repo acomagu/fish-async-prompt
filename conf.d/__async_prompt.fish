@@ -47,8 +47,12 @@ function __async_prompt_spawn
             end
         end
     end | read -lz vars
-    echo $vars | env $envs fish -c 'function __async_prompt_set_status
+    echo $vars | env $envs fish -c '
+    function __async_prompt_set_status
         return $argv
+    end
+    function __async_prompt_signal
+        kill -s "'(__async_prompt_config_internal_signal)'" '$fish_pid'
     end
     while read -a line
         test -z "$line"
@@ -65,11 +69,11 @@ function __async_prompt_spawn
     and true
     or __async_prompt_set_status $st
     '$argv[2]'
-    kill -WINCH '$fish_pid'
+    __async_prompt_signal
     sleep 0.3
-    kill -WINCH '$fish_pid'
+    __async_prompt_signal
     sleep 0.3
-    kill -WINCH '$fish_pid &
+    __async_prompt_signal' &
 end
 
 function __async_prompt_config_inherit_variables
@@ -103,4 +107,16 @@ function __async_prompt_config_functions
 
         echo $func
     end
+end
+
+function __async_prompt_config_internal_signal
+    if test -z "$async_prompt_signal_number"
+        echo SIGUSR1
+    else
+        echo "$async_prompt_signal_number"
+    end
+end
+
+function __async_prompt_repaint_prompt --on-signal (__async_prompt_config_internal_signal)
+    commandline -f repaint >/dev/null 2>/dev/null
 end

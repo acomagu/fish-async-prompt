@@ -46,6 +46,18 @@ Other functions can be specified, but they must be called from `fish_prompt` or 
 set -U async_prompt_functions fish_right_prompt
 ```
 
+### `async_prompt_internal_signal`
+
+fish-async-prompt uses SIGUSR1 to communicate with the spawned process by default. If it conflicts with other plugin/program, try changing this.
+
+**Default:** `SIGUSR1`
+
+**Example:**
+
+```fish
+set -U async_prompt_internal_signal SIGUSR2
+```
+
 ## Author
 
 - [acomagu](https://github.com/acomagu)
