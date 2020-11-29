@@ -27,7 +27,8 @@ function __async_prompt_fire --on-event fish_prompt
 
     for func in (__async_prompt_config_functions)
         __async_prompt_config_inherit_variables | __async_prompt_spawn $st \
-          $func' >'$__async_prompt_tmpdir'/'$fish_pid'_'$func
+          $func' | read -z prompt
+          echo -n $prompt >'$__async_prompt_tmpdir'/'$fish_pid'_'$func
     end
 end
 
