@@ -27,8 +27,8 @@ function __async_prompt_fire --on-event fish_prompt
 
     for func in (__async_prompt_config_functions)
         __async_prompt_config_inherit_variables | __async_prompt_spawn $st \
-          $func' | read -z prompt
-          echo -n $prompt >'$__async_prompt_tmpdir'/'$fish_pid'_'$func
+            $func' | read -z prompt
+            echo -n $prompt >'$__async_prompt_tmpdir'/'$fish_pid'_'$func
     end
 end
 
@@ -38,13 +38,13 @@ function __async_prompt_spawn
         set st $argv[1]
         while read line
             switch "$line"
-            case FISH_VERSION PWD _ history 'fish_*' hostname version
-            case status
-                echo status $st
-            case SHLVL
-                set envs $envs SHLVL=(math $SHLVL - 1)
-            case '*'
-                echo $line (string escape -- $$line)
+                case FISH_VERSION PWD _ history 'fish_*' hostname version
+                case status
+                    echo status $st
+                case SHLVL
+                    set envs $envs SHLVL=(math $SHLVL - 1)
+                case '*'
+                    echo $line (string escape -- $$line)
             end
         end
     end | read -lz vars
