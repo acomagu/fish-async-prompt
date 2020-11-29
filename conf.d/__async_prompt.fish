@@ -20,23 +20,6 @@ function __async_prompt_setup
             and cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
         end
     end
-
-    function __async_prompt_reset --on-variable async_prompt_functions
-        # Revert functions
-        for func in (__async_prompt_config_functions)
-            if functions -q '__async_prompt_'$func'_orig'
-                functions -e $func
-
-                # If the function is defined redaundantly, cannot override it by
-                # `functions -c` so done it by create wrapper function.
-                function $func -V func
-                    eval '__async_prompt_'$func'_orig' $argv
-                end
-            end
-        end
-
-        __async_prompt_setup
-    end
 end
 
 function __async_prompt_fire --on-event fish_prompt

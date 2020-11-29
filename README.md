@@ -18,7 +18,7 @@ $ fisher install acomagu/fish-async-prompt
 
 ## Configurations
 
-If you have problems, try changing the values of these variables.
+If you have problems, try changing the values of these variables. **When you changed the configurations, please restart your shell.**
 
 ### `async_prompt_inherit_variables`
 
