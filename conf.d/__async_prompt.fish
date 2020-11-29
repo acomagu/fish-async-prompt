@@ -1,122 +1,123 @@
-if status is-interactive
-    set -g __async_prompt_tmpdir /run/user/(id -u)/fish-async-prompt
-    mkdir -p $__async_prompt_tmpdir
+status is-interactive
+or exit 0
 
-    function __async_prompt_setup_on_startup --on-event fish_prompt
-        functions -e (status current-function)
+set -g __async_prompt_tmpdir /run/user/(id -u)/fish-async-prompt
+mkdir -p $__async_prompt_tmpdir
+
+function __async_prompt_setup_on_startup --on-event fish_prompt
+    functions -e (status current-function)
+
+    __async_prompt_setup
+end
+
+function __async_prompt_setup
+    set -q async_prompt_functions
+    and set -g __async_prompt_functions_internal $async_prompt_functions
+
+    for func in (__async_prompt_config_functions)
+        function $func -V func
+            test -e $__async_prompt_tmpdir'/'$fish_pid'_'$func
+            and cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
+        end
+    end
+
+    function __async_prompt_reset --on-variable async_prompt_functions
+        # Revert functions
+        for func in (__async_prompt_config_functions)
+            if functions -q '__async_prompt_'$func'_orig'
+                functions -e $func
+
+                # If the function is defined redaundantly, cannot override it by
+                # `functions -c` so done it by create wrapper function.
+                function $func -V func
+                    eval '__async_prompt_'$func'_orig' $argv
+                end
+            end
+        end
 
         __async_prompt_setup
     end
+end
 
-    function __async_prompt_setup
-        set -q async_prompt_functions
-        and set -g __async_prompt_functions_internal $async_prompt_functions
+function __async_prompt_fire --on-event fish_prompt
+    set st $status
 
-        for func in (__async_prompt_config_functions)
-            function $func -V func
-                test -e $__async_prompt_tmpdir'/'$fish_pid'_'$func
-                and cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
-            end
-        end
-
-        function __async_prompt_reset --on-variable async_prompt_functions
-            # Revert functions
-            for func in (__async_prompt_config_functions)
-                if functions -q '__async_prompt_'$func'_orig'
-                    functions -e $func
-
-                    # If the function is defined redaundantly, cannot override it by
-                    # `functions -c` so done it by create wrapper function.
-                    function $func -V func
-                        eval '__async_prompt_'$func'_orig' $argv
-                    end
-                end
-            end
-
-            __async_prompt_setup
-        end
+    for func in (__async_prompt_config_functions)
+        __async_prompt_config_inherit_variables | __async_prompt_spawn $st \
+          $func' >'$__async_prompt_tmpdir'/'$fish_pid'_'$func
     end
+end
 
-    function __async_prompt_fire --on-event fish_prompt
-        set st $status
-
-        for func in (__async_prompt_config_functions)
-            __async_prompt_config_inherit_variables | __async_prompt_spawn $st \
-              $func' >'$__async_prompt_tmpdir'/'$fish_pid'_'$func
+function __async_prompt_spawn
+    set -l envs
+    begin
+        set st $argv[1]
+        while read line
+            switch "$line"
+            case FISH_VERSION PWD _ history 'fish_*' hostname version
+            case status
+                echo status $st
+            case SHLVL
+                set envs $envs SHLVL=(math $SHLVL - 1)
+            case '*'
+                echo $line (string escape -- $$line)
+            end
         end
+    end | read -lz vars
+    echo $vars | env $envs fish -c 'function __async_prompt_set_status
+        return $argv
     end
+    while read -a line
+        test -z "$line"
+        and continue
 
-    function __async_prompt_spawn
-        set -l envs
-        begin
-            set st $argv[1]
-            while read line
-                switch "$line"
-                case FISH_VERSION PWD _ history 'fish_*' hostname version
-                case status
-                    echo status $st
-                case SHLVL
-                    set envs $envs SHLVL=(math $SHLVL - 1)
-                case '*'
-                    echo $line (string escape -- $$line)
-                end
-            end
-        end | read -lz vars
-        echo $vars | env $envs fish -c 'function __async_prompt_set_status
-            return $argv
-        end
-        while read -a line
-            test -z "$line"
-            and continue
-
-            if test "$line[1]" = status
-                set st $line[2]
-            else
-                eval set "$line"
-            end
-        end
-
-        not set -q st
-        and true
-        or __async_prompt_set_status $st
-        '$argv[2]'
-        kill -WINCH '$fish_pid'
-        sleep 0.3
-        kill -WINCH '$fish_pid'
-        sleep 0.3
-        kill -WINCH '$fish_pid &
-    end
-
-    function __async_prompt_config_inherit_variables
-        if set -q async_prompt_inherit_variables
-            if test "$async_prompt_inherit_variables" = all
-                set -ng
-            else
-                for item in $async_prompt_inherit_variables
-                    echo $item
-                end
-            end
+        if test "$line[1]" = status
+            set st $line[2]
         else
-            echo status
-            echo SHLVL
-            echo CMD_DURATION
+            eval set "$line"
         end
     end
 
-    function __async_prompt_config_functions
-        set -l funcs (
-            if set -q __async_prompt_functions_internal
-                string join \n $__async_prompt_functions_internal
-            else
-                echo fish_prompt
-                echo fish_right_prompt
-            end
-        )
-        for func in $funcs
-            functions -q "$func"
-            or continue
+    not set -q st
+    and true
+    or __async_prompt_set_status $st
+    '$argv[2]'
+    kill -WINCH '$fish_pid'
+    sleep 0.3
+    kill -WINCH '$fish_pid'
+    sleep 0.3
+    kill -WINCH '$fish_pid &
+end
 
-            echo $func
+function __async_prompt_config_inherit_variables
+    if set -q async_prompt_inherit_variables
+        if test "$async_prompt_inherit_variables" = all
+            set -ng
+        else
+            for item in $async_prompt_inherit_variables
+                echo $item
+            end
         end
+    else
+        echo status
+        echo SHLVL
+        echo CMD_DURATION
+    end
+end
+
+function __async_prompt_config_functions
+    set -l funcs (
+        if set -q __async_prompt_functions_internal
+            string join \n $__async_prompt_functions_internal
+        else
+            echo fish_prompt
+            echo fish_right_prompt
+        end
+    )
+    for func in $funcs
+        functions -q "$func"
+        or continue
+
+        echo $func
     end
 end
