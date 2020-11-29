@@ -1,4 +1,7 @@
 if status is-interactive
+    set -g __async_prompt_tmpdir /run/user/(id -u)/fish-async-prompt
+    mkdir -p $__async_prompt_tmpdir
+
     function __async_prompt_setup_on_startup --on-event fish_prompt
         functions -e (status current-function)
 
@@ -6,58 +9,31 @@ if status is-interactive
     end
 
     function __async_prompt_setup
-        set -l fish_pids (pgrep -f fish)
-        set -U -n | sed -En 's/(__async_prompt_.*_([0-9]+))/\1 \2/p' | while read -l varname pid
-            if not contains "$pid" fish_pids
-                set -e $varname
-            end
-        end
-
         set -q async_prompt_functions
         and set -g __async_prompt_functions_internal $async_prompt_functions
 
         for func in (__async_prompt_config_functions)
-            functions -q '__async_prompt_'$func'_orig'
-            or functions -c $func '__async_prompt_'$func'_orig'
-
             function $func -V func
-                eval 'echo -n $__async_prompt_'$func'_text'
+                test -e $__async_prompt_tmpdir'/'$fish_pid'_'$func
+                and cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
             end
         end
 
-        __async_prompt_post_prompt
-    end
+        function __async_prompt_reset --on-variable async_prompt_functions
+            # Revert functions
+            for func in (__async_prompt_config_functions)
+                if functions -q '__async_prompt_'$func'_orig'
+                    functions -e $func
 
-    function __async_prompt_reset --on-variable async_prompt_functions
-        # Revert functions
-        for func in (__async_prompt_config_functions)
-            if functions -q '__async_prompt_'$func'_orig'
-                functions -e $func
-
-                # If the function is defined redaundantly, cannot override it by
-                # `functions -c` so done it by create wrapper function.
-                function $func -V func
-                    eval '__async_prompt_'$func'_orig' $argv
+                    # If the function is defined redaundantly, cannot override it by
+                    # `functions -c` so done it by create wrapper function.
+                    function $func -V func
+                        eval '__async_prompt_'$func'_orig' $argv
+                    end
                 end
             end
-        end
 
-        __async_prompt_setup
-    end
-
-    function __async_prompt_sync_val --on-signal WINCH
-        for func in (__async_prompt_config_functions)
-            __async_prompt_var_move '__async_prompt_'$func'_text' '__async_prompt_'$func'_text_'(__async_prompt_pid)
-        end
-    end
-
-    function __async_prompt_var_move
-        set -l dst $argv[1]
-        set -l orig $argv[2]
-
-        if set -q $orig
-            set -g $dst "$$orig"
-            set -e $orig
+            __async_prompt_setup
         end
     end
 
@@ -65,7 +41,8 @@ if status is-interactive
         set st $status
 
         for func in (__async_prompt_config_functions)
-            __async_prompt_config_inherit_variables | __async_prompt_spawn $st $func' | read -z prompt; set -U __async_prompt_'$func'_text_'(__async_prompt_pid)' "$prompt"'
+            __async_prompt_config_inherit_variables | __async_prompt_spawn $st \
+              $func' >'$__async_prompt_tmpdir'/'$fish_pid'_'$func
         end
     end
 
@@ -140,20 +117,6 @@ if status is-interactive
             or continue
 
             echo $func
-        end
-    end
-
-    function __async_prompt_pid
-        if test -n "$pid"
-            echo $pid
-        else
-            if test -n "$fish_pid"
-                # New fish pid format
-                echo $fish_pid
-            else
-                # Old fish pid format
-                echo %self
-            end
         end
     end
 end
