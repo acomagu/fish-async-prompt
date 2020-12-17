@@ -75,6 +75,7 @@ function __async_prompt_spawn
     __async_prompt_signal
     sleep 0.3
     __async_prompt_signal' &
+    disown
 end
 
 function __async_prompt_config_inherit_variables
