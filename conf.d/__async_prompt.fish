@@ -26,9 +26,16 @@ function __async_prompt_fire --on-event fish_prompt
     set st $status
 
     for func in (__async_prompt_config_functions)
+        set -l tmpfile $__async_prompt_tmpdir'/'$fish_pid'_'$func
+
+        if functions -q $func'_loading_indicator' && test -e $tmpfile
+            read -zl last_prompt <$tmpfile
+            eval (string escape -- $func'_loading_indicator' "$last_prompt") >$tmpfile
+        end
+
         __async_prompt_config_inherit_variables | __async_prompt_spawn $st \
             $func' | read -z prompt
-            echo -n $prompt >'$__async_prompt_tmpdir'/'$fish_pid'_'$func
+            echo -n $prompt >'$tmpfile
     end
 end
 
