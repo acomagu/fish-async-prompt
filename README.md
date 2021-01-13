@@ -63,9 +63,9 @@ end
 
 ![demo3](./images/loading-indicator-demo3.webp)
 
-## Configurations
+## Other Configurations
 
-If you have problems, try changing the values of these variables. **When you changed the configurations, please restart your shell.**
+If you have problems, try changing the values of these variables. **When you change the configurations, please restart your shell.**
 
 ### `async_prompt_inherit_variables`
 
