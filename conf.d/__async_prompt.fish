@@ -6,15 +6,9 @@ test -z "$__async_prompt_tmpdir"
 and set __async_prompt_tmpdir /tmp/fish-async-prompt
 mkdir -p $__async_prompt_tmpdir
 
+# Setup after the user defined prompt functions are loaded.
 function __async_prompt_setup_on_startup --on-event fish_prompt
     functions -e (status current-function)
-
-    __async_prompt_setup
-end
-
-function __async_prompt_setup
-    set -q async_prompt_functions
-    and set -g __async_prompt_functions_internal $async_prompt_functions
 
     for func in (__async_prompt_config_functions)
         function $func -V func
@@ -105,8 +99,8 @@ end
 
 function __async_prompt_config_functions
     set -l funcs (
-        if set -q __async_prompt_functions_internal
-            string join \n $__async_prompt_functions_internal
+        if set -q $async_prompt_functions
+            string join \n $async_prompt_functions
         else
             echo fish_prompt
             echo fish_right_prompt
