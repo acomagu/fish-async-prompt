@@ -1,7 +1,9 @@
 status is-interactive
 or exit 0
 
-set -g __async_prompt_tmpdir /tmp/fish-async-prompt
+set -g __async_prompt_tmpdir "$XDG_RUNTIME_DIR/fish-async-prompt"
+test -z "$__async_prompt_tmpdir"
+and set __async_prompt_tmpdir /tmp/fish-async-prompt
 mkdir -p $__async_prompt_tmpdir
 
 function __async_prompt_setup_on_startup --on-event fish_prompt
