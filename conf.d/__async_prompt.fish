@@ -1,9 +1,11 @@
 status is-interactive
 or exit 0
 
-set -g __async_prompt_tmpdir "$XDG_RUNTIME_DIR/fish-async-prompt"
-test -z "$__async_prompt_tmpdir"
-and set __async_prompt_tmpdir /tmp/fish-async-prompt
+set -l xdg_runtime_dir "$XDG_RUNTIME_DIR"
+test -z "$xdg_runtime_dir"
+and set xdg_runtime_dir /tmp
+
+set -g __async_prompt_tmpdir "$xdg_runtime_dir/fish-async-prompt"
 mkdir -p $__async_prompt_tmpdir
 
 # Setup after the user defined prompt functions are loaded.
