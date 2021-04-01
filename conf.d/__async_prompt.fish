@@ -101,7 +101,7 @@ end
 
 function __async_prompt_config_functions
     set -l funcs (
-        if set -q $async_prompt_functions
+        if set -q async_prompt_functions
             string join \n $async_prompt_functions
         else
             echo fish_prompt
