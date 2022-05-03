@@ -15,7 +15,9 @@ function __async_prompt_setup_on_startup --on-event fish_prompt
     end
 end
 
-function __async_prompt_fire --on-event fish_prompt
+not set -q async_prompt_on_variable
+and set async_prompt_on_variable fish_bind_mode
+function __async_prompt_fire --on-event fish_prompt (for var in $async_prompt_on_variable; printf '%s\n' --on-variable $var; end)
     set st $status
 
     for func in (__async_prompt_config_functions)
@@ -38,6 +40,8 @@ function __async_prompt_spawn
         set st $argv[1]
         while read line
             switch "$line"
+                case 'fish_bind_mode'
+                  echo fish_bind_mode $fish_bind_mode
                 case FISH_VERSION PWD _ history 'fish_*' hostname version
                 case status
                     echo status $st
@@ -91,6 +95,7 @@ function __async_prompt_config_inherit_variables
         echo status
         echo SHLVL
         echo CMD_DURATION
+        echo fish_bind_mode
     end
 end
 
