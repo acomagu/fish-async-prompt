@@ -30,7 +30,7 @@ end
 
 ![demo1](./images/loading-indicator-demo1.webp)
 
-You can also use the previous prompt string because the function receives it as the first argument. For example, show previous prompt but glayed out:
+You can also use the previous prompt string because the function receives it as the first argument. For example, show previous prompt but grayed out:
 
 ```fish
 function fish_right_prompt_loading_indicator -a last_prompt
