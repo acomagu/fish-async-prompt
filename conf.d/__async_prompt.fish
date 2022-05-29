@@ -39,8 +39,8 @@ function __async_prompt_spawn -a cmd
     begin
         while read line
             switch "$line"
-                case 'fish_bind_mode'
-                  echo fish_bind_mode $fish_bind_mode
+                case fish_bind_mode
+                    echo fish_bind_mode $fish_bind_mode
                 case FISH_VERSION PWD _ history 'fish_*' hostname version
                 case status pipestatus
                     echo pipestatus $__async_prompt_last_pipestatus

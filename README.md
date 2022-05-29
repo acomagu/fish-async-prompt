@@ -71,7 +71,7 @@ If you have problems, try changing the values of these variables. **When you cha
 
 Define variables inherited to prompt functions. Set `all` to pass all global variables.
 
-**Default:** `status pipestatus SHLVL CMD_DURATION`
+**Default:** `status pipestatus SHLVL CMD_DURATION fish_bind_mode`
 
 **Example:**
 
