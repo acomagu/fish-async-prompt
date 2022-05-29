@@ -45,7 +45,7 @@ function __async_prompt_spawn -a cmd
                 case status pipestatus
                     echo pipestatus $__async_prompt_last_pipestatus
                 case SHLVL
-                    set envs $envs SHLVL=(math $SHLVL - 1)
+                    set envs $envs SHLVL=$SHLVL
                 case '*'
                     echo $line (string escape -- $$line)
             end
