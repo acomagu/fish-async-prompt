@@ -53,7 +53,7 @@ function __async_prompt_spawn -a cmd
     end | read -lz vars
     echo $vars | env $envs fish -c '
     function __async_prompt_signal
-        kill -s "'(__async_prompt_config_internal_signal)'" '$fish_pid'
+        kill -s "'(__async_prompt_config_internal_signal)'" '$fish_pid' 2>/dev/null
     end
     while read -a line
         test -z "$line"
