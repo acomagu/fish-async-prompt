@@ -41,7 +41,7 @@ function __async_prompt_spawn -a cmd
             switch "$line"
                 case fish_bind_mode
                     echo fish_bind_mode $fish_bind_mode
-                case FISH_VERSION PWD _ history 'fish_*' hostname version
+                case FISH_VERSION PWD _ history 'fish_*' hostname version status_generation
                 case status pipestatus
                     echo pipestatus $__async_prompt_last_pipestatus
                 case SHLVL
@@ -148,11 +148,11 @@ function __async_prompt_config_inherit_variables
             end
         end
     else
-        echo status
-        echo pipestatus
-        echo SHLVL
         echo CMD_DURATION
         echo fish_bind_mode
+        echo pipestatus
+        echo SHLVL
+        echo status
     end
 end
 
