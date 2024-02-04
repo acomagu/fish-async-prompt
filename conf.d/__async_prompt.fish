@@ -192,3 +192,7 @@ end
 function __async_prompt_repaint_prompt --on-signal (__async_prompt_config_internal_signal)
     commandline -f repaint >/dev/null 2>/dev/null
 end
+
+function __async_prompt_tmpdir_cleanup --on-event fish_exit
+    rm -rf "$__async_prompt_tmpdir"
+end
