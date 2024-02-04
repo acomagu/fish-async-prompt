@@ -6,6 +6,9 @@ set -g __async_prompt_tmpdir (command mktemp -d)
 # Setup after the user defined prompt functions are loaded.
 function __async_prompt_setup_on_startup --on-event fish_prompt
     functions -e (status current-function)
+    if test "$async_prompt_enable" = 0
+        return 0
+    end
 
     for func in (__async_prompt_config_functions)
         function $func -V func

@@ -111,6 +111,20 @@ This flag specifies whether to disown a subprocess for prompt rendering. Setting
 
 **Default:** `1`
 
+### `async_prompt_enable`
+
+Set 0 to disable async-prompt completely. (It does not respond to changes made after the plugin has been loaded.)
+
+**Default:** `1`
+
+**Example:**
+
+```fish
+if test "$TERM_PROGRAM" = WarpTerminal
+    set -g async_prompt_enable 0
+end
+```
+
 ## Author
 
 - [acomagu](https://github.com/acomagu)
