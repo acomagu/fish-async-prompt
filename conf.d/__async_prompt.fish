@@ -130,12 +130,10 @@ function __async_prompt_spawn -a cmd
         true
     end
     '$cmd'
-    __async_prompt_signal
-    sleep 0.3
-    __async_prompt_signal
-    sleep 0.3
     __async_prompt_signal' &
-    disown
+    if test (__async_prompt_config_disown) = 1
+        disown
+    end
 end
 
 function __async_prompt_config_inherit_variables
@@ -178,6 +176,14 @@ function __async_prompt_config_internal_signal
         echo SIGUSR1
     else
         echo "$async_prompt_signal_number"
+    end
+end
+
+function __async_prompt_config_disown
+    if test -z "$async_prompt_disown"
+        echo 1
+    else
+        echo "$async_prompt_disown"
     end
 end
 

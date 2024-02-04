@@ -105,6 +105,12 @@ fish-async-prompt uses SIGUSR1 to communicate with the spawned process by defaul
 set -U async_prompt_internal_signal SIGUSR2
 ```
 
+### `async_prompt_disown`
+
+This flag specifies whether to disown a subprocess for prompt rendering. Setting this flag to `0` may result in errors such as `There are still jobs active` when executing the exit command. Please refer to [#67](https://github.com/acomagu/fish-async-prompt/issues/67) for why this flag was introduced.
+
+**Default:** `1`
+
 ## Author
 
 - [acomagu](https://github.com/acomagu)
