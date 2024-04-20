@@ -1,7 +1,7 @@
 status is-interactive
 or exit 0
 
-set -g __async_prompt_tmpdir (command mktemp -d)
+set -g __async_prompt_var _async_prompt_$fish_pid
 
 # Setup after the user defined prompt functions are loaded.
 function __async_prompt_setup_on_startup --on-event fish_prompt
@@ -11,9 +11,12 @@ function __async_prompt_setup_on_startup --on-event fish_prompt
     end
 
     for func in (__async_prompt_config_functions)
+        set -U $__async_prompt_var'_'$func
         function $func -V func
-            test -e $__async_prompt_tmpdir'/'$fish_pid'_'$func
-            and cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
+            if set -q $__async_prompt_var'_'$func
+                set -l result $__async_prompt_var'_'$func
+                echo -n $$result
+            end
         end
     end
 end
@@ -26,16 +29,12 @@ not set -q async_prompt_on_variable
 and set async_prompt_on_variable fish_bind_mode
 function __async_prompt_fire --on-event fish_prompt (for var in $async_prompt_on_variable; printf '%s\n' --on-variable $var; end)
     for func in (__async_prompt_config_functions)
-        set -l tmpfile $__async_prompt_tmpdir'/'$fish_pid'_'$func
-
-        if functions -q $func'_loading_indicator' && test -e $tmpfile
-            read -zl last_prompt <$tmpfile
-            eval (string escape -- $func'_loading_indicator' "$last_prompt") >$tmpfile
+        if functions -q $func'_loading_indicator' && set -q $__async_prompt_var'_'$func
+            set $__async_prompt_var'_'$func ($func'_loading_indicator' $__async_prompt_var'_'$func)
         end
 
         __async_prompt_config_inherit_variables | __async_prompt_spawn \
-            $func' | read -z prompt
-            echo -n $prompt >'$tmpfile
+            $func
     end
 end
 
@@ -134,10 +133,10 @@ function __async_prompt_spawn -a cmd
     else
         true
     end
-    '$cmd'
+    set '$__async_prompt_var\'_\'$cmd' ('$cmd')
     __async_prompt_signal' &
     if test (__async_prompt_config_disown) = 1
-        disown
+        builtin disown
     end
 end
 
@@ -196,6 +195,15 @@ function __async_prompt_repaint_prompt --on-signal (__async_prompt_config_intern
     commandline -f repaint >/dev/null 2>/dev/null
 end
 
-function __async_prompt_tmpdir_cleanup --on-event fish_exit
-    rm -rf "$__async_prompt_tmpdir"
+function __async_prompt_variable_cleanup --on-event fish_exit
+    set -l prefix (string replace $fish_pid '' $__async_prompt_var)
+    set -l prompt_vars (set --show | string match -rg '^\$('"$prefix"'\d+_[a-z_]+):' | uniq)
+    for var in $prompt_vars
+        set -l pid (string match -rg '^'"$prefix"'(\d+)_[a-z_]+' $var)
+        if not ps $pid &> /dev/null
+            or test $pid -eq $fish_pid
+            set -Ue $var
+        end
+    end
+    set -ge __async_prompt_var
 end
