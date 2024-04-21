@@ -195,7 +195,7 @@ function __async_prompt_repaint_prompt --on-signal (__async_prompt_config_intern
     commandline -f repaint >/dev/null 2>/dev/null
 end
 
-function __async_prompt_variable_cleanup --on-event fish_exit
+function __async_prompt_tmpdir_cleanup --on-event fish_exit
     set -l prefix (string replace $fish_pid '' $__async_prompt_var)
     set -l prompt_vars (set --show | string match -rg '^\$('"$prefix"'\d+_[a-z_]+):' | uniq)
     for var in $prompt_vars
