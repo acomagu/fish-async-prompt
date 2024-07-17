@@ -12,8 +12,8 @@ We run your `fish_prompt` and `fish_right_prompt` functions as a separate proces
 
 With [Fisher](https://github.com/jorgebucaran/fisher):
 
-```
-$ fisher install acomagu/fish-async-prompt
+```fish
+fisher install acomagu/fish-async-prompt
 ```
 
 ## Loading Indicator
