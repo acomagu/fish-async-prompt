@@ -1,7 +1,11 @@
 status is-interactive
 or exit 0
 
-set -g __async_prompt_tmpdir (command mktemp -d)
+# get the path for the mktemp binary instead of directly invoking it
+#   required fix due to edge case in cygwin shell environment
+set mktemp_bin (type mktemp | awk '{print $3}')
+
+set -g __async_prompt_tmpdir (command $mktemp_bin -d)
 
 # Setup after the user defined prompt functions are loaded.
 function __async_prompt_setup_on_startup --on-event fish_prompt
