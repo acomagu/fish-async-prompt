@@ -1,32 +1,62 @@
 status is-interactive
 or exit 0
 
+function __async_prompt_log --argument-names func_name message
+    if test "$async_prompt_debug" = 1
+        # Initialize debug log file in XDG cache dir or ~/.cache if not already done
+        if not set -q __async_prompt_debug_log
+            set -l cache_dir
+            if set -q XDG_CACHE_HOME
+                set cache_dir "$XDG_CACHE_HOME/fish"
+            else
+                set cache_dir "$HOME/.cache/fish"
+            end
+            mkdir -p "$cache_dir"
+            set -g __async_prompt_debug_log "$cache_dir/async_prompt_debug.log"
+        end
+
+        echo (date "+%Y-%m-%d %H:%M:%S") "[$func_name]" "$message" >> $__async_prompt_debug_log
+    end
+end
+
 set -g __async_prompt_tmpdir (command mktemp -d)
 
 # Setup after the user defined prompt functions are loaded.
 function __async_prompt_setup_on_startup --on-event fish_prompt
+    __async_prompt_log "__async_prompt_setup_on_startup" "Starting setup"
+
     functions -e (status current-function)
+
     if test "$async_prompt_enable" = 0
+        __async_prompt_log "__async_prompt_setup_on_startup" "Async prompt disabled"
         return 0
     end
 
     for func in (__async_prompt_config_functions)
+        __async_prompt_log "__async_prompt_setup_on_startup" "Setting up function: $func"
         function $func -V func
             test -e $__async_prompt_tmpdir'/'$fish_pid'_'$func
             and command cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
         end
     end
+
+    __async_prompt_log "__async_prompt_setup_on_startup" "Setup complete"
 end
 
 not set -q async_prompt_on_variable
 and set async_prompt_on_variable fish_bind_mode
+
 function __async_prompt_fire --on-event fish_prompt (for var in $async_prompt_on_variable; printf '%s\n' --on-variable $var; end)
+    __async_prompt_log "__async_prompt_fire" "Starting..."
+
     set -l __async_prompt_last_pipestatus $pipestatus
 
     for func in (__async_prompt_config_functions)
+        __async_prompt_log "__async_prompt_fire" "Generating async prompt for function: $func"
         set -l tmpfile $__async_prompt_tmpdir'/'$fish_pid'_'$func
 
         if functions -q $func'_loading_indicator' && test -e $tmpfile
+            __async_prompt_log "__async_prompt_fire" "Generating loading indicator for function: $func"
             read -zl last_prompt <$tmpfile
             eval (string escape -- $func'_loading_indicator' "$last_prompt") >$tmpfile
         end
@@ -35,9 +65,12 @@ function __async_prompt_fire --on-event fish_prompt (for var in $async_prompt_on
             $func' | read -z prompt
             echo -n $prompt >'$tmpfile
     end
+    __async_prompt_log "__async_prompt_fire" "Prompt fire complete"
 end
 
 function __async_prompt_spawn -a cmd
+    __async_prompt_log "__async_prompt_spawn" "Spawning command: $cmd"
+
     set -l envs
     begin
         while read line
@@ -54,6 +87,9 @@ function __async_prompt_spawn -a cmd
             end
         end
     end | read -lz vars
+
+    __async_prompt_log "__async_prompt_spawn" "Got vars: $vars"
+
     echo $vars | env $envs fish -c '
     function __async_prompt_signal
         kill -s "'(__async_prompt_config_internal_signal)'" '$fish_pid' 2>/dev/null
@@ -137,9 +173,13 @@ function __async_prompt_spawn -a cmd
     if test (__async_prompt_config_disown) = 1
         disown
     end
+
+    __async_prompt_log "__async_prompt_spawn" "Command spawned and disowned: $__async_prompt_config_disown"
 end
 
 function __async_prompt_config_inherit_variables
+    __async_prompt_log "__async_prompt_config_inherit_variables" "Getting inherited variables"
+
     if set -q async_prompt_inherit_variables
         if test "$async_prompt_inherit_variables" = all
             set -ng
@@ -158,6 +198,8 @@ function __async_prompt_config_inherit_variables
 end
 
 function __async_prompt_config_functions
+    __async_prompt_log "__async_prompt_config_functions" "Getting configured prompt functions"
+
     set -l funcs (
         if set -q async_prompt_functions
             string join \n $async_prompt_functions
@@ -191,9 +233,13 @@ function __async_prompt_config_disown
 end
 
 function __async_prompt_repaint_prompt --on-signal (__async_prompt_config_internal_signal)
+    __async_prompt_log "__async_prompt_repaint_prompt" "Repainting prompt"
+
     commandline -f repaint >/dev/null 2>/dev/null
 end
 
 function __async_prompt_tmpdir_cleanup --on-event fish_exit
+    __async_prompt_log "__async_prompt_tmpdir_cleanup" "Cleaning up temporary directory: $__async_prompt_tmpdir"
+
     command rm -rf "$__async_prompt_tmpdir"
 end
