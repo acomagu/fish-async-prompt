@@ -1,6 +1,9 @@
+# Don't run if the shell is not interactive
 status is-interactive
 or exit 0
 
+
+# Logs a message to the debug log file if `async_prompt_debug` is set to `1`.
 function __async_prompt_log --argument-names func_name message
     if test "$async_prompt_debug" = 1
         # Initialize debug log file in XDG cache dir or ~/.cache if not already done
@@ -19,12 +22,23 @@ function __async_prompt_log --argument-names func_name message
     end
 end
 
+
+# Creates a temporary directory for storing the async prompt output.
 set -g __async_prompt_tmpdir (command mktemp -d)
 
-# Setup after the user defined prompt functions are loaded.
+
+# Called when the prompt is about to be displayed for the first time.
+#
+# Replaces the prompt functions (fish_prompt, fish_right_prompt) with
+# with functions that don't render the prompt and instead cat the output
+# of the async prompt functions.
+#
+# Effectively, runs only once because the function is removed immediately
+# after it runs.
 function __async_prompt_setup_on_startup --on-event fish_prompt
     __async_prompt_log "__async_prompt_setup_on_startup" "Starting setup"
 
+    # Remove this function after it runs once, since it only needs to run on startup
     functions -e (status current-function)
 
     if test "$async_prompt_enable" = 0
@@ -43,24 +57,61 @@ function __async_prompt_setup_on_startup --on-event fish_prompt
     __async_prompt_log "__async_prompt_setup_on_startup" "Setup complete"
 end
 
+
+# Make sure __async_prompt_fire is called when the bind mode variable changes.
 not set -q async_prompt_on_variable
 and set async_prompt_on_variable fish_bind_mode
 
+
+# Called when the prompt is about to be displayed (`--on-event fish_prompt`) or
+# when one of the variables in `$async_prompt_on_variable` changes.
+#
+# Executes the loading indicator functions synchronously and stores the result
+# in the temporary files. Then the async prompt functions are executed
+# asynchronously in the background.
+#
+# Once all `--on-event fish_prompt` events have been processed, the prompt is
+# painted using the functions created in `__async_prompt_setup_on_startup`.
+#
+# They display the contents of temporary files as the left and right prompt. At
+# that point the temporary files contain the result of the synchronous loading
+# indicator functions.
+#
+# Once the async background process is done, it sends a signal to the parent
+# shell, which causes the prompt to be repainted again. This time the temporary
+# file contains the async prompt and the loading indicator is replaced with the
+# result of the async prompt.
 function __async_prompt_fire --on-event fish_prompt (for var in $async_prompt_on_variable; printf '%s\n' --on-variable $var; end)
     __async_prompt_log "__async_prompt_fire" "Starting..."
 
     set -l __async_prompt_last_pipestatus $pipestatus
 
+    # Generate the sync and async prompts for each function (fish_prompt,
+    # fish_right_prompt, etc.)
     for func in (__async_prompt_config_functions)
         __async_prompt_log "__async_prompt_fire" "Generating async prompt for function: $func"
         set -l tmpfile $__async_prompt_tmpdir'/'$fish_pid'_'$func
 
+        # Check if a loading_indicator function is defined for the prompt
+        # function (fish_prompt, fish_right_prompt, etc.)
+        #
+        # If it is, pass it the last prompt so that it can display the
+        # previous prompt, a temporary prompt or a loading indicator while
+        # the full async prompt is being generated.
+        #
+        # Store the result in the tmpfile.
         if functions -q $func'_loading_indicator' && test -e $tmpfile
             __async_prompt_log "__async_prompt_fire" "Generating loading indicator for function: $func"
             read -zl last_prompt <$tmpfile
             eval (string escape -- $func'_loading_indicator' "$last_prompt") >$tmpfile
         end
 
+        # Call the __async_prompt_spawn function and pass it the command it
+        # should execute as well as a list of variables that should be passed
+        # to the background process.
+        #
+        # The result is stored in the $prompt variable and then written to the
+        # temporary file (replacing the loading indicator)..
         __async_prompt_config_inherit_variables | __async_prompt_last_pipestatus=$__async_prompt_last_pipestatus __async_prompt_spawn \
             $func' | read -z prompt
             echo -n $prompt >'$tmpfile
@@ -68,9 +119,20 @@ function __async_prompt_fire --on-event fish_prompt (for var in $async_prompt_on
     __async_prompt_log "__async_prompt_fire" "Prompt fire complete"
 end
 
+
+# Spawns a command in the background.
+#
+# Takes an argument for the command to execute in the background process.
+# And also accepts a pipe with a list of env variable names that should be
+# forwarded to the background process.
+#
+# Can be called like...
+# `__async_prompt_config_inherit_variables | __async_prompt_spawn 'echo $fish_bind_mode'`
 function __async_prompt_spawn -a cmd
     __async_prompt_log "__async_prompt_spawn" "Spawning command: $cmd"
 
+    # Determines values for piped variable names and stores them as a list
+    # of strings like `fish_bind_mode default`
     set -l envs
     begin
         while read line
@@ -90,6 +152,14 @@ function __async_prompt_spawn -a cmd
 
     __async_prompt_log "__async_prompt_spawn" "Got vars: $vars"
 
+    # This actually spawns the background process.
+    #
+    #   - Reads the variables from the pipe and sets them as env variables
+    #   - Recreates the exact pipe status of each command in the original
+    #     pipes (such as command 1 | command2 | command3)
+    #   - Runs the command in the background process
+    #   - Sends a `SIGUSR1` signal to the parent process when the command is
+    #     done
     echo $vars | env $envs fish -c '
     function __async_prompt_signal
         kill -s "'(__async_prompt_config_internal_signal)'" '$fish_pid' 2>/dev/null
@@ -170,6 +240,8 @@ function __async_prompt_spawn -a cmd
     end
     '$cmd'
     __async_prompt_signal' &
+
+    # Disowning removes the background process from the shell's list of jobs.
     if test (__async_prompt_config_disown) = 1
         disown
     end
@@ -177,11 +249,18 @@ function __async_prompt_spawn -a cmd
     __async_prompt_log "__async_prompt_spawn" "Command spawned and disowned: $__async_prompt_config_disown"
 end
 
+
+# Returns a list of variable names that should be forwarded to the background
+# process.
+#
+# You can set `async_prompt_inherit_variables` to `all` to inherit all global
+# variables or set it to a list of variable names to inherit only those.
 function __async_prompt_config_inherit_variables
     __async_prompt_log "__async_prompt_config_inherit_variables" "Getting inherited variables"
 
     if set -q async_prompt_inherit_variables
         if test "$async_prompt_inherit_variables" = all
+            # Print all global variables, but only the names.
             set -ng
         else
             for item in $async_prompt_inherit_variables
@@ -197,6 +276,11 @@ function __async_prompt_config_inherit_variables
     end
 end
 
+
+# Returns a list of prompt functions that should be executed asynchronously.
+#
+# You can set `async_prompt_functions` to a list of function names or it will
+# default to `fish_prompt` and `fish_right_prompt`.
 function __async_prompt_config_functions
     __async_prompt_log "__async_prompt_config_functions" "Getting configured prompt functions"
 
@@ -208,6 +292,8 @@ function __async_prompt_config_functions
             echo fish_right_prompt
         end
     )
+
+    # Only output functions that actually exist
     for func in $funcs
         functions -q "$func"
         or continue
@@ -216,6 +302,12 @@ function __async_prompt_config_functions
     end
 end
 
+
+# Returns the signal number that should be used to notify the parent process
+# that the background process is done.
+#
+# You can set `async_prompt_signal_number` to a custom signal number or it will
+# default to `SIGUSR1`.
 function __async_prompt_config_internal_signal
     if test -z "$async_prompt_signal_number"
         echo SIGUSR1
@@ -224,6 +316,11 @@ function __async_prompt_config_internal_signal
     end
 end
 
+
+# Returns whether the background process should be disowned.
+#
+# You can set `async_prompt_disown` to `1` to disown the background process or
+# set it to `0` to disable disowning.
 function __async_prompt_config_disown
     if test -z "$async_prompt_disown"
         echo 1
@@ -232,12 +329,20 @@ function __async_prompt_config_disown
     end
 end
 
+
+# Called when the background process sends the signal indicating that it's
+# done (by default SIGUSR1).
+#
+# This function asks fish to repaint the prompt, which causes the new functions
+# that cat the tmp file in `__async_prompt_setup_on_startup` to be executed.
 function __async_prompt_repaint_prompt --on-signal (__async_prompt_config_internal_signal)
     __async_prompt_log "__async_prompt_repaint_prompt" "Repainting prompt"
 
     commandline -f repaint >/dev/null 2>/dev/null
 end
 
+
+# Cleans up the temporary directory when the shell exits.
 function __async_prompt_tmpdir_cleanup --on-event fish_exit
     __async_prompt_log "__async_prompt_tmpdir_cleanup" "Cleaning up temporary directory: $__async_prompt_tmpdir"
 
