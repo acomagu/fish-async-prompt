@@ -13,7 +13,7 @@ function __async_prompt_setup_on_startup --on-event fish_prompt
     for func in (__async_prompt_config_functions)
         function $func -V func
             test -e $__async_prompt_tmpdir'/'$fish_pid'_'$func
-            and cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
+            and command cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
         end
     end
 end
@@ -195,5 +195,5 @@ function __async_prompt_repaint_prompt --on-signal (__async_prompt_config_intern
 end
 
 function __async_prompt_tmpdir_cleanup --on-event fish_exit
-    rm -rf "$__async_prompt_tmpdir"
+    command rm -rf "$__async_prompt_tmpdir"
 end
