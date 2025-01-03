@@ -120,8 +120,7 @@ function __async_prompt_fire --on-event fish_prompt (for var in $async_prompt_on
         # The result is stored in the $prompt variable and then written to the
         # temporary file (replacing the loading indicator)..
         __async_prompt_config_inherit_variables | __async_prompt_last_pipestatus=$__async_prompt_last_pipestatus __async_prompt_spawn \
-            $func' | read -z prompt
-            echo -n $prompt >'$tmpfile
+            'if functions -q '$func'; '$func'; else; echo -n ""; end | read -z prompt; echo -n $prompt >'$tmpfile
     end
     __async_prompt_log "__async_prompt_fire" "Prompt fire complete"
 end
