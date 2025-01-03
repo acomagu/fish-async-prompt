@@ -48,6 +48,13 @@ function __async_prompt_setup_on_startup --on-event fish_prompt
 
     for func in (__async_prompt_config_functions)
         __async_prompt_log "__async_prompt_setup_on_startup" "Setting up function: $func"
+
+        # Backup the original fish prompt functions if they exist so that they
+        # can be used by other fish plugins, such as `refresh-prompt-on-cmd`.
+        functions -c $func '__async_prompt_orig_'$func
+
+        # Replace the fish_prompt functions with replacements that cat the
+        # sync and async prompts from the tmpdir
         function $func -V func
             test -e $__async_prompt_tmpdir'/'$fish_pid'_'$func
             and command cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
