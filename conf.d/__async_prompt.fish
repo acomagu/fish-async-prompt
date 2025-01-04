@@ -3,11 +3,12 @@ status is-interactive
 or exit 0
 
 
-# Logs a message to the debug log file if `async_prompt_debug` is set to `1`.
+# Logs a message to the debug log file if `rpoc_debug_log_enable` is set to
+# `1`.
 function __async_prompt_log --argument-names func_name message
-    if test "$async_prompt_debug" = 1
+    if test "$async_prompt_debug_log_enable" = 1
         # Initialize debug log file in XDG cache dir or ~/.cache if not already done
-        if not set -q __async_prompt_debug_log
+        if not set -q async_prompt_debug_log_path
             set -l cache_dir
             if set -q XDG_CACHE_HOME
                 set cache_dir "$XDG_CACHE_HOME/fish"
@@ -15,10 +16,10 @@ function __async_prompt_log --argument-names func_name message
                 set cache_dir "$HOME/.cache/fish"
             end
             mkdir -p "$cache_dir"
-            set -g __async_prompt_debug_log "$cache_dir/async_prompt_debug.log"
+            set -g async_prompt_debug_log_path "$cache_dir/async_prompt_debug.log"
         end
 
-        echo (date "+%Y-%m-%d %H:%M:%S") "[$func_name]" "$message" >> $__async_prompt_debug_log
+        echo (date "+%Y-%m-%d %H:%M:%S") "[$func_name]" "$message" >> $async_prompt_debug_log_path
     end
 end
 
