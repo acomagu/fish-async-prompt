@@ -23,7 +23,7 @@ function __async_prompt_keep_last_pipestatus
 end
 
 not set -q async_prompt_on_variable
-and set async_prompt_on_variable fish_bind_mode
+and set async_prompt_on_variable fish_bind_mode PWD
 function __async_prompt_fire --on-event fish_prompt (for var in $async_prompt_on_variable; printf '%s\n' --on-variable $var; end)
     for func in (__async_prompt_config_functions)
         set -l tmpfile $__async_prompt_tmpdir'/'$fish_pid'_'$func
