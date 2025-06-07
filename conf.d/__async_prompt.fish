@@ -9,6 +9,7 @@ function __async_prompt_setup_on_startup --on-event fish_prompt
     if test "$async_prompt_enable" = 0
         return 0
     end
+    set -g __async_prompt_config_functions_were_reset 1
 
     for func in (__async_prompt_config_functions)
         function $func -V func
@@ -26,13 +27,17 @@ not set -q async_prompt_on_variable
 and set async_prompt_on_variable fish_bind_mode
 function __async_prompt_fire --on-event fish_prompt (for var in $async_prompt_on_variable; printf '%s\n' --on-variable $var; end)
     if test "$async_prompt_enable" = 0
-        # Erase the event handlers. Note that `async_prompt_enable` can be set to 0 *after* this function
-        # is defined (e.g. in `config.fish`). We do require that it is set *before* the first prompt is drawn.
-        functions -e (status current-function)
-        functions -e __async_prompt_repaint_prompt
-        __async_prompt_tmpdir_cleanup
-        functions -e __async_prompt_tmpdir_cleanup
-        return 0
+        if not test "$__async_prompt_config_functions_were_reset" = 1
+            # Erase the event handlers. Note that `async_prompt_enable` can be set to 0 *after* this function
+            # is defined (e.g. in `config.fish`). We do require that it is set *before* the first prompt is drawn.
+            functions -e (status current-function)
+            functions -e __async_prompt_repaint_prompt
+            __async_prompt_tmpdir_cleanup
+            functions -e __async_prompt_tmpdir_cleanup
+            return 0
+        end
+        echo 'fish-async-prompt: WARNING: `$async_prompt_enable` is set to 0, but it\'s too late to disable fish-async-prompt.'
+        echo 'fish-async-prompt: Either run `set -g async_prompt_enable 1` to disable this message or run `async_prompt_enable=0 exec fish`'
     end
 
     for func in (__async_prompt_config_functions)
