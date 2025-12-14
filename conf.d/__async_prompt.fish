@@ -62,7 +62,11 @@ function __async_prompt_setup_on_startup --on-event fish_prompt
         end
     end
 
+set -g __async_prompt_last_pipestatus 0
+function __async_prompt_keep_last_pipestatus --on-event fish_postexec
     __async_prompt_log "__async_prompt_setup_on_startup" "Setup complete"
+
+    set -g __async_prompt_last_pipestatus $pipestatus
 end
 
 
@@ -281,6 +285,7 @@ function __async_prompt_config_inherit_variables
         echo SHLVL
         echo status
     end
+    echo __async_prompt_last_pipestatus
 end
 
 
