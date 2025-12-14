@@ -58,7 +58,8 @@ function __async_prompt_setup_on_startup --on-event fish_prompt
         # sync and async prompts from the tmpdir
         function $func -V func
             test -e $__async_prompt_tmpdir'/'$fish_pid'_'$func
-            and command cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
+            # Using `string collect` as a faster cat.
+            and string collect <$__async_prompt_tmpdir'/'$fish_pid'_'$func
         end
     end
 end
