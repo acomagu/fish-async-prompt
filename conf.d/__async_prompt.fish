@@ -61,6 +61,7 @@ function __async_prompt_setup_on_startup --on-event fish_prompt
             and command cat $__async_prompt_tmpdir'/'$fish_pid'_'$func
         end
     end
+end
 
 set -g __async_prompt_last_pipestatus 0
 function __async_prompt_keep_last_pipestatus --on-event fish_postexec
