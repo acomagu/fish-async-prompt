@@ -68,7 +68,7 @@ end
 
 # Make sure __async_prompt_fire is called when the bind mode variable changes.
 not set -q async_prompt_on_variable
-and set async_prompt_on_variable fish_bind_mode
+and set async_prompt_on_variable fish_bind_mode PWD
 
 
 # Called when the prompt is about to be displayed (`--on-event fish_prompt`) or
