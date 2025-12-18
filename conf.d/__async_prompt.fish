@@ -252,7 +252,7 @@ function __async_prompt_spawn -a cmd
         true
     end
     '$cmd'
-    __async_prompt_signal' &
+    __async_prompt_signal' 2>/dev/null &
 
     # Disowning removes the background process from the shell's list of jobs.
     if test (__async_prompt_config_disown) = 1
